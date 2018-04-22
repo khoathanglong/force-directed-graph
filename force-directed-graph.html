@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Force Directed Graph</title>
+  <script src='http://d3js.org/d3.v3.min.js'></script>
+  <link rel="stylesheet" href="flags.min.css">
+
+</head>
+<body>
+  <div id="tooltip"></div>
+<script>
+  const width=window.innerWidth;
+  const height=window.innerHeight;
+  //create svg
+  const svg=d3.select('body').append('svg').attr('width',width).attr('height',height);
+	const url ='https://raw.githubusercontent.com/DealPete/forceDirected/master/countries.json';
+    fetch(url)
+    .then(res=>res.json())
+    .then(data=>{
+        let nodes=data.nodes;
+        let links=data.links;
+        const force=d3.layout.force()
+          .size([width,height])
+          .nodes(nodes)
+          .links(links)
+          .charge(-200)
+          .gravity(0.4)
+          .linkDistance(width/20)
+          .start();
+
+        const link=svg.selectAll('.link')
+              .data(links)
+              .enter().append('line')
+              .attr('class','link');
+
+        const node=d3.select('body').append('div')
+              .selectAll('.node')
+              .data(nodes)
+              .enter().append('img')
+              .attr('class', d=>{
+                return `flag flag-${d.code}`
+              })
+              .style('position','absolute')
+              .call(force.drag)
+              
+
+        force.on('tick',()=>{//some mysterious things here
+          node.style('left',d=>d.x+'px')
+              .style('top',d=>d.y+'px')
+              .on('mouseover',(data) =>{
+                d3.select('#tooltip')
+                  .text(data.country)
+                  .style('display','block')
+                  .style('left',`${data.x+20}px`)
+                  .style('top',`${data.y-20}px`)
+              })
+              .on('mouseleave',()=>{
+                d3.select('#tooltip').style('display','none')
+              })
+
+          link
+          .attr('x1', function(d) { return d.source.x; })
+          .attr('y1', function(d) { return d.source.y; })
+          .attr('x2', function(d) { return d.target.x; })
+          .attr('y2', function(d) { return d.target.y; });
+        });
+    })
+</script>
+  <style>
+    body{
+      background-image: url('background.jpg');
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+
+    .node{
+      position: absolute;
+    }
+    .link{
+      stroke:red;
+      stroke-width:1px;
+    }
+    #tooltip{
+      position: absolute;
+      background-color: black;
+      color:white;
+      border-radius: 5px;
+      font-size: 1em;
+      padding:4px;
+      z-index: 10;
+      display: none
+    }
+
+  </style>
+</body>
+</html>
